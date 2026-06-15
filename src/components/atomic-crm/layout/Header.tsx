@@ -1,6 +1,6 @@
 import { FileText, Import, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
@@ -10,23 +10,26 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
 
+const MAIN_TABS = [
+  { label: "Dashboard", to: "/", end: true },
+  { label: "Clients", to: "/clients" },
+  { label: "Carriers", to: "/carriers" },
+  { label: "Pipeline", to: "/pipeline" },
+  { label: "Follow-Ups", to: "/follow_ups" },
+  { label: "Activity Log", to: "/contact_logs" },
+];
+
+const TOOLS_TABS = [
+  { label: "SMS Campaigns", to: "/sms" },
+  { label: "Reply Analyzer", to: "/replies" },
+  { label: "Call Scripts", to: "/scripts" },
+  { label: "Stop List", to: "/stop-list" },
+  { label: "Import Data", to: "/import" },
+];
+
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
-  const location = useLocation();
-  const translate = useTranslate();
-
-  let currentPath: string | boolean = "/";
-  if (matchPath("/", location.pathname)) {
-    currentPath = "/";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
-  } else if (matchPath("/companies/*", location.pathname)) {
-    currentPath = "/companies";
-  } else if (matchPath("/deals/*", location.pathname)) {
-    currentPath = "/deals";
-  } else {
-    currentPath = false;
-  }
+  const { pathname } = useLocation();
 
   return (
     <>
@@ -50,34 +53,25 @@ const Header = () => {
                 />
                 <h1 className="text-xl font-semibold">{title}</h1>
               </Link>
-              <div>
-                <nav className="flex">
-                  <NavigationTab
-                    label={translate("ra.page.dashboard")}
-                    to="/"
-                    isActive={currentPath === "/"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.contacts.name", {
-                      smart_count: 2,
-                    })}
-                    to="/contacts"
-                    isActive={currentPath === "/contacts"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.companies.name", {
-                      smart_count: 2,
-                    })}
-                    to="/companies"
-                    isActive={currentPath === "/companies"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.deals.name", {
-                      smart_count: 2,
-                    })}
-                    to="/deals"
-                    isActive={currentPath === "/deals"}
-                  />
+              <div className="overflow-x-auto">
+                <nav className="flex items-center">
+                  {MAIN_TABS.map((tab) => (
+                    <NavigationTab
+                      key={tab.to}
+                      label={tab.label}
+                      to={tab.to}
+                      isActive={tab.end ? pathname === tab.to : pathname.startsWith(tab.to)}
+                    />
+                  ))}
+                  <span className="w-px h-5 bg-secondary-foreground/25 mx-1 shrink-0" />
+                  {TOOLS_TABS.map((tab) => (
+                    <NavigationTab
+                      key={tab.to}
+                      label={tab.label}
+                      to={tab.to}
+                      isActive={pathname.startsWith(tab.to)}
+                    />
+                  ))}
                 </nav>
               </div>
               <div className="flex items-center">

@@ -1,0 +1,131 @@
+{
+  "title": "Phase 2 — Alpha Insurance CRM: Polish, Insurance Tabs, Deploy",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Rebuild sidebar with static domain-specific navigation + brand colors",
+      "passes": true,
+      "acceptanceCriteria": [
+        "app-sidebar.tsx uses a static nav config (not dynamic resource names) with proper labels: Dashboard, Clients, Carriers, Pipeline, Follow-Ups, Activity Log, SMS Campaigns, Reply Analyzer, Call Scripts, Stop List, Import Data, Settings",
+        "Sidebar background is #170810 (dark warm), text is #E8D5C4 cream",
+        "Active item background is #7B1C2A burgundy with white text",
+        "Hover shows rgba(123,28,42,0.3) tint",
+        "Two nav sections separated by a divider: main CRM nav and tools nav",
+        "Each nav item has a proper Lucide icon (LayoutDashboard, Users, Building2, TrendingUp, CheckSquare, Activity, MessageSquare, MessageCircle, Phone, Ban, Upload)",
+        "Footer shows signed-in user name and initials avatar",
+        "Sidebar collapsible to icon-only at 64px wide"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Build Import Data tab (/import) with CSV parsing, dedup, status normalization",
+      "passes": true,
+      "acceptanceCriteria": [
+        "File src/components/alpha-crm/import-data/ImportData.tsx exists",
+        "Textarea accepts CSV or tab-separated text",
+        "Format selector: CSV, Tab-separated with auto-detect toggle",
+        "Preview table renders parsed rows with column headers",
+        "Status normalization applied: ACTIVE EFT -> ACTIVE, PENDING CANCEL -> AT_RISK, EXPIRED -> LAPSED, TERMINATED -> CANCELLED etc",
+        "Phone formatting: strip non-digits, prepend +1 if 10 digits",
+        "Import button upserts to Supabase clients table via useCreate/dataProvider",
+        "Success message shows count: 'Imported X clients. Y duplicates merged. Z rows skipped'",
+        "Deduplication: match on policy_number first, then phone, then skip",
+        "Empty state has helpful instructions"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Build SMS Campaigns tab (/sms) with segment selector, message composer, stop list filter",
+      "passes": true,
+      "acceptanceCriteria": [
+        "File src/components/alpha-crm/sms-campaigns/SmsCampaigns.tsx exists",
+        "Segment selector: Active, At Risk, Lapsed, Cancelled tabs with client count badge",
+        "Message composer textarea with character count and merge field insert buttons: {first_name}, {carrier}, {agent_name}",
+        "Preview panel shows 3 sample messages with merge fields resolved",
+        "Stop list filter: queries stop_list table and shows exclusion count",
+        "Queue Campaign button writes to sms_queue Supabase table",
+        "Campaign history table shows past campaigns",
+        "UI clearly states: 'Messages will be queued, not sent immediately'",
+        "No API keys or sending logic in this component"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Build Reply Analyzer tab (/replies) with Anthropic API classification",
+      "passes": true,
+      "acceptanceCriteria": [
+        "File src/components/alpha-crm/reply-analyzer/ReplyAnalyzer.tsx exists",
+        "Textarea for reply text and phone number field",
+        "Analyze button calls Anthropic API at VITE_ANTHROPIC_API_KEY env var",
+        "Classification displayed: OPT_OUT, NOT_INTERESTED, HOT_LEAD, INTERESTED, PAYMENT_INTENT, CALLBACK_REQUEST, GENERAL",
+        "Confidence level shown: High / Medium / Low",
+        "PAYMENT_INTENT classification ALWAYS shows 'Route to Amanda' as primary action button (non-negotiable requirement)",
+        "OPT_OUT shows 'Add to Stop List' action",
+        "CALLBACK_REQUEST/INTERESTED shows 'Create Follow-Up' action",
+        "'Log Interaction' button writes to contact_logs table",
+        "Phone number lookup matches against clients in Supabase and shows client info card",
+        "API key from VITE_ANTHROPIC_API_KEY env var only, never hardcoded"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Build Call Script Engine tab (/scripts) with client selector and Anthropic generation",
+      "passes": true,
+      "acceptanceCriteria": [
+        "File src/components/alpha-crm/call-scripts/CallScripts.tsx exists",
+        "Client search/select that queries Supabase clients by name or phone",
+        "Selected client info card: name, carrier, product, status, premium, last contact, days since last contact",
+        "Script type selector: Phone Call, Text Message, Email",
+        "Optional context textarea",
+        "Generate Script button calls Anthropic API with personalized system prompt using client data",
+        "Script output panel shows generated script in clean readable format",
+        "Copy to Clipboard button",
+        "Log as Interaction button writes to contact_logs",
+        "Payment-related context always yields: 'Please call Amanda directly at the office for billing questions'",
+        "API key from VITE_ANTHROPIC_API_KEY only"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Build Stop List tab (/stop-list) with add/remove/search/bulk import",
+      "passes": true,
+      "acceptanceCriteria": [
+        "File src/components/alpha-crm/stop-list/StopList.tsx exists",
+        "Search bar filters by phone number",
+        "Add phone input with reason dropdown: Opted Out, Do Not Contact, Wrong Number, Deceased, Other",
+        "Table shows: phone, reason, added_by, created_at with Remove button",
+        "Remove button has confirmation modal",
+        "Bulk import: paste phones one per line and add all",
+        "Stats bar shows total count and last updated date",
+        "Reads/writes to Supabase stop_list table"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Wire all new routes in CRM.tsx and add Supabase migration for sms_queue + stop_list",
+      "passes": true,
+      "acceptanceCriteria": [
+        "CRM.tsx has CustomRoutes for /import, /sms, /replies, /scripts, /stop-list",
+        "All 5 new tab components are imported in CRM.tsx",
+        "Supabase migration file exists at supabase/migrations/20260614000000_sms_queue_stop_list.sql",
+        "Migration creates sms_queue table with: id, segment, message_template, client_count, excluded_count, queued_at, status, queued_by",
+        "Migration creates stop_list table with: id, phone, reason, added_by, created_at",
+        "Both tables have RLS policies for authenticated users",
+        "No references to 'Contacts', 'Companies', or 'Deals' remain in user-facing UI text"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Brand colors applied globally + netlify.toml + .env.example updated",
+      "passes": true,
+      "acceptanceCriteria": [
+        "netlify.toml exists with build command 'npm run build', publish 'dist', and SPA redirect rule",
+        ".env.example includes VITE_ANTHROPIC_API_KEY entry with documentation comment",
+        "Primary button color uses burgundy #7B1C2A via CSS custom property or Tailwind class override",
+        "Main content background is warm off-white (#FAFAF9)",
+        "Browser tab title in index.html says 'Alpha Insurance CRM'",
+        "ready.tsx no longer shows marmelab links (updated to Alpha Insurance branding)"
+      ]
+    }
+  ]
+}

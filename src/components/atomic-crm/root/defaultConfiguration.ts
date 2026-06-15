@@ -1,62 +1,56 @@
 import type { ConfigurationContextValue } from "./ConfigurationContext";
 
-export const defaultDarkModeLogo = "./logos/logo_atomic_crm_dark.svg";
-export const defaultLightModeLogo = "./logos/logo_atomic_crm_light.svg";
+export const defaultDarkModeLogo = "./logos/logo_alpha_insurance.svg";
+export const defaultLightModeLogo = "./logos/logo_alpha_light.svg";
 
 export const defaultCurrency = "USD";
 
-export const defaultTitle = "Atomic CRM";
+export const defaultTitle = "Alpha Insurance";
 
 export const defaultCompanySectors = [
-  { value: "communication-services", label: "Communication Services" },
-  { value: "consumer-discretionary", label: "Consumer Discretionary" },
-  { value: "consumer-staples", label: "Consumer Staples" },
-  { value: "energy", label: "Energy" },
-  { value: "financials", label: "Financials" },
-  { value: "health-care", label: "Health Care" },
-  { value: "industrials", label: "Industrials" },
-  { value: "information-technology", label: "Information Technology" },
-  { value: "materials", label: "Materials" },
-  { value: "real-estate", label: "Real Estate" },
-  { value: "utilities", label: "Utilities" },
+  { value: "auto", label: "Auto" },
+  { value: "home", label: "Home" },
+  { value: "life", label: "Life" },
+  { value: "burial", label: "Burial" },
+  { value: "health", label: "Health" },
+  { value: "renters", label: "Renters" },
+  { value: "umbrella", label: "Umbrella" },
+  { value: "commercial", label: "Commercial" },
 ];
 
 export const defaultDealStages = [
-  { value: "opportunity", label: "Opportunity" },
-  { value: "proposal-sent", label: "Proposal Sent" },
-  { value: "in-negociation", label: "In Negotiation" },
+  { value: "open", label: "Open" },
+  { value: "quoted", label: "Quoted" },
   { value: "won", label: "Won" },
   { value: "lost", label: "Lost" },
-  { value: "delayed", label: "Delayed" },
 ];
 
 export const defaultDealPipelineStatuses = ["won"];
 
 export const defaultDealCategories = [
-  { value: "other", label: "Other" },
-  { value: "copywriting", label: "Copywriting" },
-  { value: "print-project", label: "Print project" },
-  { value: "ui-design", label: "UI Design" },
-  { value: "website-design", label: "Website design" },
+  { value: "new", label: "New Business" },
+  { value: "renewal", label: "Renewal" },
+  { value: "cross_sell", label: "Cross-Sell" },
+  { value: "winback", label: "Winback" },
 ];
 
 export const defaultNoteStatuses = [
-  { value: "cold", label: "Cold", color: "#7dbde8" },
-  { value: "warm", label: "Warm", color: "#e8cb7d" },
-  { value: "hot", label: "Hot", color: "#e88b7d" },
-  { value: "in-contract", label: "In Contract", color: "#a4e87d" },
+  { value: "no_answer", label: "No Answer", color: "#6B7280" },
+  { value: "voicemail", label: "Voicemail", color: "#2563EB" },
+  { value: "spoke", label: "Spoke", color: "#059669" },
+  { value: "texted_no_reply", label: "Texted No Reply", color: "#D97706" },
+  { value: "texted_replied", label: "Texted Replied", color: "#059669" },
+  { value: "emailed", label: "Emailed", color: "#2563EB" },
+  { value: "reinstated", label: "Reinstated", color: "#059669" },
+  { value: "not_interested", label: "Not Interested", color: "#DC2626" },
 ];
 
 export const defaultTaskTypes = [
-  { value: "none", label: "None" },
-  { value: "email", label: "Email" },
-  { value: "demo", label: "Demo" },
-  { value: "lunch", label: "Lunch" },
-  { value: "meeting", label: "Meeting" },
-  { value: "follow-up", label: "Follow-up" },
-  { value: "thank-you", label: "Thank you" },
-  { value: "ship", label: "Ship" },
-  { value: "call", label: "Call" },
+  { value: "renewal", label: "Renewal Follow-Up" },
+  { value: "reactivation", label: "Reactivation" },
+  { value: "cross_sell", label: "Cross-Sell" },
+  { value: "payment", label: "Payment Issue" },
+  { value: "general", label: "General" },
 ];
 
 export const defaultConfiguration: ConfigurationContextValue = {

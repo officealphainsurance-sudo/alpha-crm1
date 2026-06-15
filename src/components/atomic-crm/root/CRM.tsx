@@ -15,16 +15,21 @@ import { ForgotPasswordPage } from "@/components/supabase/forgot-password-page";
 import { SetPasswordPage } from "@/components/supabase/set-password-page";
 import { OAuthConsentPage } from "@/components/supabase/oauth-consent-page";
 
-import companies from "../companies";
-import contacts from "../contacts";
-import { Dashboard } from "../dashboard/Dashboard";
-import { MobileDashboard } from "../dashboard/MobileDashboard";
-import deals from "../deals";
+import { AlphaDashboard } from "@/components/alpha-crm/dashboard/AlphaDashboard";
+import clients from "@/components/alpha-crm/clients";
+import carriers from "@/components/alpha-crm/carriers";
+import pipeline from "@/components/alpha-crm/pipeline";
+import followUps from "@/components/alpha-crm/follow-ups";
+import activityLog from "@/components/alpha-crm/activity-log";
+import { ImportData } from "@/components/alpha-crm/import-data/ImportData";
+import { SmsCampaigns } from "@/components/alpha-crm/sms-campaigns/SmsCampaigns";
+import { ReplyAnalyzer } from "@/components/alpha-crm/reply-analyzer/ReplyAnalyzer";
+import { CallScripts } from "@/components/alpha-crm/call-scripts/CallScripts";
+import { StopList } from "@/components/alpha-crm/stop-list/StopList";
 import { Layout } from "../layout/Layout";
 import { MobileLayout } from "../layout/MobileLayout";
 import { SignupPage } from "../login/SignupPage";
 import { ConfirmationRequired } from "../login/ConfirmationRequired";
-import { ImportPage } from "../misc/ImportPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
 import {
   getAuthProvider as defaultAuthProviderBuilder,
@@ -54,11 +59,7 @@ import {
 import { i18nProvider as defaulti18nProvider } from "../providers/commons/i18nProvider";
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
-import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
-import { ContactListMobile } from "../contacts/ContactList.tsx";
-import { ContactShow } from "../contacts/ContactShow.tsx";
-import { CompanyShow } from "../companies/CompanyShow.tsx";
-import { NoteShowPage } from "../notes/NoteShowPage.tsx";
+import { ClientList } from "@/components/alpha-crm/clients/ClientList";
 
 const defaultStore = localStorageStore(undefined, "CRM");
 
@@ -242,7 +243,7 @@ const DesktopAdmin = (
   return (
     <Admin
       layout={props.layout ?? Layout}
-      dashboard={props.dashboard ?? Dashboard}
+      dashboard={props.dashboard ?? AlphaDashboard}
       {...props}
     >
       <CustomRoutes noLayout>
@@ -262,17 +263,19 @@ const DesktopAdmin = (
       <CustomRoutes>
         <Route path={ProfilePage.path} element={<ProfilePage />} />
         <Route path={SettingsPage.path} element={<SettingsPage />} />
-        <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={ChangelogPage.path} element={<ChangelogPage />} />
+        <Route path="/import" element={<ImportData />} />
+        <Route path="/sms" element={<SmsCampaigns />} />
+        <Route path="/replies" element={<ReplyAnalyzer />} />
+        <Route path="/scripts" element={<CallScripts />} />
+        <Route path="/stop-list" element={<StopList />} />
       </CustomRoutes>
-      <Resource name="deals" {...deals} />
-      <Resource name="contacts" {...contacts} />
-      <Resource name="companies" {...companies} />
-      <Resource name="contact_notes" />
-      <Resource name="deal_notes" />
-      <Resource name="tasks" />
+      <Resource name="clients" {...clients} />
+      <Resource name="carriers" {...carriers} />
+      <Resource name="pipeline" {...pipeline} />
+      <Resource name="follow_ups" {...followUps} />
+      <Resource name="contact_logs" {...activityLog} />
       <Resource name="sales" {...sales} />
-      <Resource name="tags" />
     </Admin>
   );
 };
@@ -306,7 +309,7 @@ const MobileAdmin = (
       <Admin
         queryClient={queryClient}
         layout={props.layout ?? MobileLayout}
-        dashboard={props.dashboard ?? MobileDashboard}
+        dashboard={props.dashboard ?? AlphaDashboard}
         {...props}
       >
         <CustomRoutes noLayout>
@@ -328,17 +331,18 @@ const MobileAdmin = (
             element={<SettingsPageMobile />}
           />
           <Route path={ChangelogPage.path} element={<ChangelogPage />} />
+          <Route path="/import" element={<ImportData />} />
+          <Route path="/sms" element={<SmsCampaigns />} />
+          <Route path="/replies" element={<ReplyAnalyzer />} />
+          <Route path="/scripts" element={<CallScripts />} />
+          <Route path="/stop-list" element={<StopList />} />
         </CustomRoutes>
-        <Resource
-          name="contacts"
-          list={ContactListMobile}
-          show={ContactShow}
-          recordRepresentation={contacts.recordRepresentation}
-        >
-          <Route path=":id/notes/:noteId" element={<NoteShowPage />} />
-        </Resource>
-        <Resource name="companies" show={CompanyShow} />
-        <Resource name="tasks" list={MobileTasksList} />
+        <Resource name="clients" list={ClientList} recordRepresentation={clients.recordRepresentation} />
+        <Resource name="carriers" {...carriers} />
+        <Resource name="pipeline" {...pipeline} />
+        <Resource name="follow_ups" {...followUps} />
+        <Resource name="contact_logs" {...activityLog} />
+        <Resource name="sales" {...sales} />
       </Admin>
     </PersistQueryClientProvider>
   );
