@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetList, useCreate, useNotify } from "ra-core";
+import { useNotifyOnError } from "../QueryError";
 import {
   MessageCircle,
   AlertTriangle,
@@ -61,11 +62,13 @@ export function ReplyAnalyzer() {
   const [matchedClient, setMatchedClient] = useState<Client | null>(null);
   const [addingToStop, setAddingToStop] = useState(false);
 
-  const { data: clients } = useGetList<Client>("clients", {
+  const { data: clients, error: clientsError } = useGetList<Client>("clients", {
     filter: {},
     pagination: { page: 1, perPage: 5000 },
     sort: { field: "name", order: "ASC" },
   });
+
+  useNotifyOnError(clientsError, "clients");
 
   const findClientByPhone = (phone: string): Client | null => {
     if (!phone || !clients) return null;

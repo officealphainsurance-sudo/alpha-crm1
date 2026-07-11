@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetList, useCreate, useNotify } from "ra-core";
+import { useNotifyOnError } from "../QueryError";
 import {
   Phone,
   MessageSquare,
@@ -49,13 +50,15 @@ export function CallScripts() {
   const [logging, setLogging] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const { data: clients } = useGetList<Client>("clients", {
+  const { data: clients, error: clientsError } = useGetList<Client>("clients", {
     filter: search.length >= 2
       ? { "name@ilike": `%${search}%` }
       : {},
     pagination: { page: 1, perPage: 20 },
     sort: { field: "name", order: "ASC" },
   });
+
+  useNotifyOnError(clientsError, "clients");
 
   const daysSinceContact = selectedClient?.last_contact
     ? Math.floor(

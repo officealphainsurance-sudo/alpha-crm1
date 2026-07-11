@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetList, useUpdate, useCreate, useNotify } from "ra-core";
+import { QueryErrorBanner } from "../QueryError";
 import {
   DragDropContext,
   Droppable,
@@ -26,7 +27,7 @@ export function PipelineKanban() {
   const notify = useNotify();
   const [update] = useUpdate();
 
-  const { data, isPending, refetch } = useGetList<PipelineRecord>("pipeline", {
+  const { data, isPending, refetch, error } = useGetList<PipelineRecord>("pipeline", {
     filter: {},
     pagination: { page: 1, perPage: 500 },
     sort: { field: "created_at", order: "DESC" },
@@ -89,6 +90,8 @@ export function PipelineKanban() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <QueryErrorBanner error={error} label="pipeline" />
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-4 gap-4 overflow-x-auto min-h-96">

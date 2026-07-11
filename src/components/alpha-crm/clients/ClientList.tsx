@@ -19,6 +19,7 @@ import { STATUS_COLORS, STATUS_LABELS } from "../types";
 import { formatPhone, formatCurrency, formatDate } from "../utils";
 import { ClientShow } from "./ClientShow";
 import { ClientCreate } from "./ClientCreate";
+import { QueryErrorRow } from "../QueryError";
 
 type TabValue = "ALL" | ClientStatus;
 
@@ -48,7 +49,7 @@ export function ClientList() {
   if (tab !== "ALL") filter["status@eq"] = tab;
   if (debouncedSearch) filter["name@ilike"] = `%${debouncedSearch}%`;
 
-  const { data, isPending, total, refetch } = useGetList<Client>("clients", {
+  const { data, isPending, total, refetch, error } = useGetList<Client>("clients", {
     filter,
     pagination: { page: 1, perPage: 200 },
     sort: { field: "name", order: "ASC" },
@@ -136,6 +137,8 @@ export function ClientList() {
                   ))}
                 </TableRow>
               ))
+            ) : error ? (
+              <QueryErrorRow error={error} label="clients" colSpan={8} />
             ) : !data?.length ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-32 text-center">

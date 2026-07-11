@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { ContactLog, InteractionType } from "../types";
 import { OUTCOME_LABELS } from "../types";
 import { formatRelativeDate, formatDate } from "../utils";
+import { QueryErrorBanner } from "../QueryError";
 
 const INTERACTION_ICONS: Record<InteractionType, React.ReactNode> = {
   Call: <Phone className="size-3.5" />,
@@ -38,7 +39,7 @@ export function ActivityLogList() {
   const filter: Record<string, string> = {};
   if (typeFilter !== "ALL") filter["interaction_type@eq"] = typeFilter;
 
-  const { data, isPending } = useGetList<ContactLog>("contact_logs", {
+  const { data, isPending, error } = useGetList<ContactLog>("contact_logs", {
     filter,
     pagination: { page: 1, perPage: 200 },
     sort: { field: "created_at", order: "DESC" },
@@ -92,6 +93,8 @@ export function ActivityLogList() {
             </div>
           ))}
         </div>
+      ) : error ? (
+        <QueryErrorBanner error={error} label="activity" />
       ) : !data?.length ? (
         <div className="flex flex-col items-center gap-3 py-20 text-muted-foreground">
           <Activity className="size-12 opacity-20" />

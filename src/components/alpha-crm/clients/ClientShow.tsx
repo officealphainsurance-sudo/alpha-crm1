@@ -13,6 +13,7 @@ import { Phone, Mail, Calendar, FileText, Clock, User } from "lucide-react";
 import type { Client, ContactLog } from "../types";
 import { STATUS_COLORS, OUTCOME_LABELS, STATUS_LABELS } from "../types";
 import { formatPhone, formatCurrency, formatDate, formatRelativeDate } from "../utils";
+import { QueryErrorBanner } from "../QueryError";
 
 interface ClientShowProps {
   id: string | null;
@@ -20,13 +21,13 @@ interface ClientShowProps {
 }
 
 export function ClientShow({ id, onClose }: ClientShowProps) {
-  const { data: client, isPending } = useGetOne<Client>(
+  const { data: client, isPending, error: clientError } = useGetOne<Client>(
     "clients",
     { id: id ?? "" },
     { enabled: !!id },
   );
 
-  const { data: logs } = useGetList<ContactLog>("contact_logs", {
+  const { data: logs, error: logsError } = useGetList<ContactLog>("contact_logs", {
     filter: { "client_id@eq": id },
     sort: { field: "created_at", order: "DESC" },
     pagination: { page: 1, perPage: 20 },
@@ -35,14 +36,23 @@ export function ClientShow({ id, onClose }: ClientShowProps) {
   return (
     <Sheet open={!!id} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
-        {isPending || !client ? (
+        {clientError ? (
+          <div className="mt-8">
+            <QueryErrorBanner error={clientError} label="client" />
+          </div>
+        ) : isPending || !client ? (
           <div className="space-y-3 mt-8">
             <Skeleton className="h-7 w-48" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-40" />
           </div>
         ) : (
-          <ClientDetail client={client} logs={logs ?? []} onClose={onClose} />
+          <ClientDetail
+            client={client}
+            logs={logs ?? []}
+            logsError={logsError}
+            onClose={onClose}
+          />
         )}
       </SheetContent>
     </Sheet>
@@ -52,10 +62,12 @@ export function ClientShow({ id, onClose }: ClientShowProps) {
 function ClientDetail({
   client,
   logs,
+  logsError,
   onClose,
 }: {
   client: Client;
   logs: ContactLog[];
+  logsError: unknown;
   onClose: () => void;
 }) {
   const notify = useNotify();
@@ -210,7 +222,9 @@ function ClientDetail({
               Contact Log
             </p>
           </div>
-          {logs.length === 0 ? (
+          {logsError ? (
+            <QueryErrorBanner error={logsError} label="contact history" />
+          ) : logs.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No contact history yet.</p>
           ) : (
             <ul className="space-y-3">

@@ -8,11 +8,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Carrier } from "../types";
 import { formatPhone } from "../utils";
 import { CarrierCreate } from "./CarrierCreate";
+import { QueryErrorBanner } from "../QueryError";
 
 export function CarrierList() {
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data, isPending, refetch } = useGetList<Carrier>("carriers", {
+  const { data, isPending, refetch, error } = useGetList<Carrier>("carriers", {
     filter: {},
     pagination: { page: 1, perPage: 100 },
     sort: { field: "carrier_name", order: "ASC" },
@@ -48,6 +49,8 @@ export function CarrierList() {
             <Skeleton key={i} className="h-40 w-full rounded-lg" />
           ))}
         </div>
+      ) : error ? (
+        <QueryErrorBanner error={error} label="carriers" />
       ) : active.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-20 text-muted-foreground">
           <Building2 className="size-12 opacity-20" />

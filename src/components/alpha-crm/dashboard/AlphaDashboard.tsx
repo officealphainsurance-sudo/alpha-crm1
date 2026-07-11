@@ -13,11 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Client, FollowUp, ContactLog } from "../types";
 import { STATUS_COLORS, STATUS_LABELS, OUTCOME_LABELS } from "../types";
 import { formatDate, formatRelativeDate, formatCurrency } from "../utils";
+import { QueryErrorBanner, useNotifyOnError } from "../QueryError";
 
 export function AlphaDashboard() {
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: clients, isPending: clientsLoading } = useGetList<Client>(
+  const { data: clients, isPending: clientsLoading, error: clientsError } = useGetList<Client>(
     "clients",
     {
       filter: {},
@@ -26,23 +27,26 @@ export function AlphaDashboard() {
     },
   );
 
-  const { data: overdueFollowUps } = useGetList<FollowUp>("follow_ups", {
+  const { data: overdueFollowUps, error: overdueError } = useGetList<FollowUp>("follow_ups", {
     filter: { "completed@eq": "false", "scheduled_date@lt": today },
     pagination: { page: 1, perPage: 100 },
     sort: { field: "scheduled_date", order: "ASC" },
   });
 
-  const { data: todayFollowUps } = useGetList<FollowUp>("follow_ups", {
+  const { data: todayFollowUps, error: todayError } = useGetList<FollowUp>("follow_ups", {
     filter: { "completed@eq": "false", "scheduled_date@eq": today },
     pagination: { page: 1, perPage: 50 },
     sort: { field: "priority", order: "ASC" },
   });
 
-  const { data: recentActivity } = useGetList<ContactLog>("contact_logs", {
+  const { data: recentActivity, error: activityError } = useGetList<ContactLog>("contact_logs", {
     filter: {},
     pagination: { page: 1, perPage: 10 },
     sort: { field: "created_at", order: "DESC" },
   });
+
+  useNotifyOnError(overdueError ?? todayError, "follow-ups");
+  useNotifyOnError(activityError, "recent activity");
 
   const statusCounts = {
     ACTIVE: clients?.filter((c) => c.status === "ACTIVE").length ?? 0,
@@ -76,6 +80,8 @@ export function AlphaDashboard() {
           })}
         </p>
       </div>
+
+      {clientsError && <QueryErrorBanner error={clientsError} label="clients" />}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetList, useCreate, useDelete, useNotify } from "ra-core";
+import { QueryErrorRow } from "../QueryError";
 import { Ban, Plus, Search, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +76,7 @@ export function StopList() {
   const [removeTarget, setRemoveTarget] = useState<StopListEntry | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const { data, isPending, total, refetch } = useGetList<StopListEntry>(
+  const { data, isPending, total, refetch, error } = useGetList<StopListEntry>(
     "stop_list",
     {
       filter: search ? { "phone@ilike": `%${search.replace(/\D/g, "")}%` } : {},
@@ -293,6 +294,8 @@ export function StopList() {
                     ))}
                   </TableRow>
                 ))
+              ) : error ? (
+                <QueryErrorRow error={error} label="stop list" colSpan={5} />
               ) : !data?.length ? (
                 <TableRow>
                   <TableCell

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useGetList, useCreate, useNotify } from "ra-core";
+import { useNotifyOnError } from "../QueryError";
 import {
   MessageSquare,
   Users,
@@ -70,24 +71,28 @@ export function SmsCampaigns() {
   const [message, setMessage] = useState("");
   const [queuing, setQueuing] = useState(false);
 
-  const { data: clients } = useGetList<Client>("clients", {
+  const { data: clients, error: clientsError } = useGetList<Client>("clients", {
     filter: { "status@eq": segment },
     pagination: { page: 1, perPage: 1000 },
     sort: { field: "name", order: "ASC" },
   });
 
-  const { data: stopList } = useGetList<StopListEntry>("stop_list", {
+  const { data: stopList, error: stopListError } = useGetList<StopListEntry>("stop_list", {
     filter: {},
     pagination: { page: 1, perPage: 10000 },
     sort: { field: "created_at", order: "DESC" },
   });
 
-  const { data: campaigns, isPending: campaignsPending } =
+  const { data: campaigns, isPending: campaignsPending, error: campaignsError } =
     useGetList<SmsQueueRecord>("sms_queue", {
       filter: {},
       pagination: { page: 1, perPage: 50 },
       sort: { field: "queued_at", order: "DESC" },
     });
+
+  useNotifyOnError(clientsError, "clients");
+  useNotifyOnError(stopListError, "stop list");
+  useNotifyOnError(campaignsError, "campaigns");
 
   const stopPhones = useMemo(
     () => new Set((stopList ?? []).map((e) => e.phone)),

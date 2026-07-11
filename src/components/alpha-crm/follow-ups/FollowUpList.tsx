@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { FollowUp, FollowUpOutcome } from "../types";
 import { OUTCOME_LABELS, PRIORITY_COLORS, nextFollowUpDate } from "../types";
 import { formatDate, isPastDate, isWithinDays } from "../utils";
+import { QueryErrorRow } from "../QueryError";
 
 const OUTCOME_OPTIONS: { value: FollowUpOutcome; label: string }[] = [
   { value: "no_answer", label: "No Answer" },
@@ -63,7 +64,7 @@ export function FollowUpList() {
     sort: { field: "scheduled_date", order: "ASC" },
   });
 
-  const { data, isPending, refetch } = useGetList<FollowUp>("follow_ups", {
+  const { data, isPending, refetch, error } = useGetList<FollowUp>("follow_ups", {
     filter: filterBySection(activeSection),
     pagination: { page: 1, perPage: 200 },
     sort: {
@@ -198,6 +199,8 @@ export function FollowUpList() {
                   ))}
                 </TableRow>
               ))
+            ) : error ? (
+              <QueryErrorRow error={error} label="follow-ups" colSpan={6} />
             ) : !data?.length ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-28 text-center">
