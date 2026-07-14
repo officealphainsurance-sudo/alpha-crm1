@@ -2,6 +2,15 @@
 -- Tables
 -- This file declares all tables in the public schema.
 --
+-- SCHEMA DRIFT (Alpha Insurance) — this declarative schema is OUT OF SYNC with
+-- the live database. The hosted project also contains `clients`, `contact_logs`,
+-- and `raw_replies` tables that are NOT declared anywhere under supabase/. They
+-- were created directly against the hosted project; the 20260613 migration even
+-- depends on `clients`/`contact_logs` via FK/index without declaring them.
+-- `raw_replies` (inbound SMS replies, consumed by the client timeline and the
+-- Reply Analyzer; see RawReply in src/components/alpha-crm/types.ts) has no DDL
+-- in the repo at all. Add the real table definitions here when reconciling.
+--
 
 -- Extensions
 create extension if not exists "http" with schema "extensions";

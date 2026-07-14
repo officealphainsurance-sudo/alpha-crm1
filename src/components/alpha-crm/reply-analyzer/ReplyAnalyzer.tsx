@@ -13,43 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Client } from "../types";
+import type { Client, ReplyClassification } from "../types";
+import { CLASSIFICATION_LABELS, CLASSIFICATION_COLORS } from "../types";
 import { formatPhone, formatCurrency } from "../utils";
 
-type Classification =
-  | "OPT_OUT"
-  | "NOT_INTERESTED"
-  | "HOT_LEAD"
-  | "INTERESTED"
-  | "PAYMENT_INTENT"
-  | "CALLBACK_REQUEST"
-  | "GENERAL";
-
 interface AnalysisResult {
-  classification: Classification;
+  classification: ReplyClassification;
   confidence: "high" | "medium" | "low";
   suggested_action: string;
 }
-
-const CLASSIFICATION_LABELS: Record<Classification, string> = {
-  OPT_OUT: "Opt-Out Request",
-  NOT_INTERESTED: "Not Interested",
-  HOT_LEAD: "Hot Lead",
-  INTERESTED: "Interested",
-  PAYMENT_INTENT: "Payment Intent",
-  CALLBACK_REQUEST: "Callback Request",
-  GENERAL: "General",
-};
-
-const CLASSIFICATION_COLORS: Record<Classification, string> = {
-  OPT_OUT: "bg-red-100 text-red-800 border-red-200",
-  NOT_INTERESTED: "bg-gray-100 text-gray-700 border-gray-200",
-  HOT_LEAD: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  INTERESTED: "bg-blue-100 text-blue-700 border-blue-200",
-  PAYMENT_INTENT: "bg-amber-100 text-amber-800 border-amber-200",
-  CALLBACK_REQUEST: "bg-violet-100 text-violet-700 border-violet-200",
-  GENERAL: "bg-gray-100 text-gray-600 border-gray-200",
-};
 
 export function ReplyAnalyzer() {
   const notify = useNotify();
@@ -89,10 +61,9 @@ export function ReplyAnalyzer() {
 
     const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
     if (!apiKey) {
-      notify(
-        "VITE_ANTHROPIC_API_KEY is not set — see SETUP.md",
-        { type: "error" },
-      );
+      notify("VITE_ANTHROPIC_API_KEY is not set — see SETUP.md", {
+        type: "error",
+      });
       return;
     }
 
@@ -150,16 +121,20 @@ Respond in JSON only: {"classification": "...", "confidence": "high|medium|low",
   const handleAddToStopList = async () => {
     const phone = phoneInput.trim() || matchedClient?.phone;
     if (!phone) {
-      notify("Enter a phone number to add to the stop list", { type: "warning" });
+      notify("Enter a phone number to add to the stop list", {
+        type: "warning",
+      });
       return;
     }
     setAddingToStop(true);
     try {
       const digits = phone.replace(/\D/g, "");
       const normalized =
-        digits.length === 10 ? `+1${digits}` :
-        digits.length === 11 && digits[0] === "1" ? `+${digits}` :
-        phone.trim();
+        digits.length === 10
+          ? `+1${digits}`
+          : digits.length === 11 && digits[0] === "1"
+            ? `+${digits}`
+            : phone.trim();
       await create("stop_list", {
         data: {
           phone: normalized,
@@ -312,7 +287,9 @@ Respond in JSON only: {"classification": "...", "confidence": "high|medium|low",
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Confidence
                   </p>
-                  <p className={`text-sm font-semibold capitalize ${confidenceColor}`}>
+                  <p
+                    className={`text-sm font-semibold capitalize ${confidenceColor}`}
+                  >
                     {result.confidence}
                   </p>
                 </div>
@@ -418,10 +395,12 @@ Respond in JSON only: {"classification": "...", "confidence": "high|medium|low",
                 </div>
               </CardContent>
             </Card>
-          ) : phoneInput && (
-            <div className="rounded-md border p-4 text-sm text-muted-foreground">
-              No client matched for {formatPhone(phoneInput)}
-            </div>
+          ) : (
+            phoneInput && (
+              <div className="rounded-md border p-4 text-sm text-muted-foreground">
+                No client matched for {formatPhone(phoneInput)}
+              </div>
+            )
           )}
         </div>
       )}

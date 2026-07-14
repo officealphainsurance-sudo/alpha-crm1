@@ -68,6 +68,39 @@ export interface ContactLog {
   created_at: string;
 }
 
+export type ReplyClassification =
+  | "OPT_OUT"
+  | "NOT_INTERESTED"
+  | "HOT_LEAD"
+  | "INTERESTED"
+  | "PAYMENT_INTENT"
+  | "CALLBACK_REQUEST"
+  | "GENERAL";
+
+export type ReplyConfidence = "HIGH" | "MEDIUM" | "LOW";
+
+/**
+ * Inbound SMS reply captured from the messaging pipeline. Every reply is
+ * inbound by definition; `received_at` drives timeline ordering and `client_id`
+ * scopes it to a client. This table lives in the live database but is NOT yet
+ * declared under supabase/schemas/ — see the drift note at the top of
+ * 01_tables.sql.
+ */
+export interface RawReply {
+  id: string;
+  phone: string;
+  message_text: string;
+  received_at: string;
+  chat_db_rowid: number | null;
+  classified: boolean | null;
+  classification: ReplyClassification | null;
+  confidence: ReplyConfidence | null;
+  suggested_action: string | null;
+  client_id: string | null;
+  processed_at: string | null;
+  created_at: string | null;
+}
+
 export interface Carrier {
   id: string;
   carrier_name: string;
@@ -187,4 +220,24 @@ export const PRIORITY_COLORS: Record<FollowUpPriority, string> = {
   high: "bg-amber-100 text-amber-800",
   normal: "bg-gray-100 text-gray-700",
   low: "bg-blue-50 text-blue-700",
+};
+
+export const CLASSIFICATION_LABELS: Record<ReplyClassification, string> = {
+  OPT_OUT: "Opt-Out Request",
+  NOT_INTERESTED: "Not Interested",
+  HOT_LEAD: "Hot Lead",
+  INTERESTED: "Interested",
+  PAYMENT_INTENT: "Payment Intent",
+  CALLBACK_REQUEST: "Callback Request",
+  GENERAL: "General",
+};
+
+export const CLASSIFICATION_COLORS: Record<ReplyClassification, string> = {
+  OPT_OUT: "bg-red-100 text-red-800 border-red-200",
+  NOT_INTERESTED: "bg-gray-100 text-gray-700 border-gray-200",
+  HOT_LEAD: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  INTERESTED: "bg-blue-100 text-blue-700 border-blue-200",
+  PAYMENT_INTENT: "bg-amber-100 text-amber-800 border-amber-200",
+  CALLBACK_REQUEST: "bg-violet-100 text-violet-700 border-violet-200",
+  GENERAL: "bg-gray-100 text-gray-600 border-gray-200",
 };
