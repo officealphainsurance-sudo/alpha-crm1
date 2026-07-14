@@ -6,11 +6,12 @@ import {
   ClipboardList,
   Phone,
   Activity,
+  MessageSquare,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Client, FollowUp, ContactLog } from "../types";
+import type { Client, FollowUp, ContactLog, RawReply } from "../types";
 import { STATUS_LABELS, OUTCOME_LABELS } from "../types";
 import { formatDate, formatRelativeDate, formatCurrency } from "../utils";
 import { QueryErrorBanner, useNotifyOnError } from "../QueryError";
@@ -55,8 +56,29 @@ export function AlphaDashboard() {
     },
   );
 
+  // Inbound SMS replies received in the last 7 days (count only).
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+  const { total: recentRepliesCount, error: repliesError } =
+    useGetList<RawReply>("raw_replies", {
+      filter: { "received_at@gte": weekAgo },
+      pagination: { page: 1, perPage: 1 },
+      sort: { field: "received_at", order: "DESC" },
+    });
+
+  // Contact-log entries created today (count only).
+  const { total: todayActivityCount, error: todayActivityError } =
+    useGetList<ContactLog>("contact_logs", {
+      filter: { "created_at@gte": today },
+      pagination: { page: 1, perPage: 1 },
+      sort: { field: "created_at", order: "DESC" },
+    });
+
   useNotifyOnError(overdueError ?? todayError, "follow-ups");
   useNotifyOnError(activityError, "recent activity");
+  useNotifyOnError(repliesError, "replies");
+  useNotifyOnError(todayActivityError, "today's activity");
 
   const statusCounts = {
     ACTIVE: clients?.filter((c) => c.status === "ACTIVE").length ?? 0,
@@ -100,7 +122,7 @@ export function AlphaDashboard() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <KpiCard
           title="Active Clients"
           value={clientsLoading ? null : statusCounts.ACTIVE}
@@ -128,6 +150,18 @@ export function AlphaDashboard() {
           icon={<ClipboardList className="size-4 text-blue-500" />}
           sub={`${overdueFollowUps?.length ?? 0} overdue`}
           highlight={(overdueFollowUps?.length ?? 0) > 0}
+        />
+        <KpiCard
+          title="Recent Replies"
+          value={recentRepliesCount ?? 0}
+          icon={<MessageSquare className="size-4 text-sky-600" />}
+          sub="last 7 days"
+        />
+        <KpiCard
+          title="Today's Activity"
+          value={todayActivityCount ?? 0}
+          icon={<Activity className="size-4 text-violet-600" />}
+          sub="logged today"
         />
       </div>
 
