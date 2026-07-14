@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useGetList, useUpdate, useNotify } from "ra-core";
+import { useMemo, useState } from "react";
+import { useGetList, useGetMany, useUpdate, useNotify } from "ra-core";
 import {
   ClipboardList,
   CheckCircle2,
   Clock,
   AlertTriangle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -23,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FollowUp, FollowUpOutcome } from "../types";
+import type { Client, FollowUp, FollowUpOutcome } from "../types";
 import { OUTCOME_LABELS, PRIORITY_COLORS, nextFollowUpDate } from "../types";
 import { formatDate, isPastDate } from "../utils";
 import { QueryErrorRow } from "../QueryError";
@@ -46,6 +47,7 @@ export function FollowUpList() {
   const [update] = useUpdate();
   const [activeSection, setActiveSection] = useState<Section>("today");
   const [logging, setLogging] = useState<string | null>(null);
+  const [completing, setCompleting] = useState<string | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -80,6 +82,23 @@ export function FollowUpList() {
       },
     },
   );
+
+  // Join real client names from the clients table (the denormalized
+  // follow_ups.client_name can be stale or blank).
+  const clientIds = useMemo(
+    () => Array.from(new Set((data ?? []).map((fu) => fu.client_id))),
+    [data],
+  );
+  const { data: clientRecords } = useGetMany<Client>(
+    "clients",
+    { ids: clientIds },
+    { enabled: clientIds.length > 0 },
+  );
+  const clientNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of clientRecords ?? []) map.set(c.id, c.name);
+    return map;
+  }, [clientRecords]);
 
   const overdueCount = overdue?.length ?? 0;
 
@@ -119,6 +138,24 @@ export function FollowUpList() {
       notify("Failed to log outcome", { type: "error" });
     } finally {
       setLogging(null);
+    }
+  };
+
+  // Mark a follow-up done without logging an outcome or scheduling a next one.
+  const markComplete = async (followUp: FollowUp) => {
+    setCompleting(followUp.id);
+    try {
+      await update("follow_ups", {
+        id: followUp.id,
+        data: { completed: true, completed_at: new Date().toISOString() },
+        previousData: followUp,
+      });
+      notify("Follow-up marked complete", { type: "success" });
+      refetch();
+    } catch {
+      notify("Failed to mark complete", { type: "error" });
+    } finally {
+      setCompleting(null);
     }
   };
 
@@ -232,7 +269,9 @@ export function FollowUpList() {
                   }
                 >
                   <TableCell className="font-medium">
-                    {fu.client_name ?? fu.client_id.slice(0, 8)}
+                    {clientNameById.get(fu.client_id) ??
+                      fu.client_name ??
+                      fu.client_id.slice(0, 8)}
                   </TableCell>
                   <TableCell className="capitalize text-sm">
                     {fu.follow_up_type.replace("_", " ")}
@@ -257,27 +296,40 @@ export function FollowUpList() {
                   </TableCell>
                   {activeSection !== "completed" ? (
                     <TableCell>
-                      <Select
-                        disabled={logging === fu.id}
-                        onValueChange={(v) =>
-                          logOutcome(fu, v as FollowUpOutcome)
-                        }
-                      >
-                        <SelectTrigger className="h-8 w-40 text-xs">
-                          <SelectValue placeholder="Log outcome…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OUTCOME_OPTIONS.map((o) => (
-                            <SelectItem
-                              key={o.value}
-                              value={o.value}
-                              className="text-xs"
-                            >
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          disabled={logging === fu.id}
+                          onValueChange={(v) =>
+                            logOutcome(fu, v as FollowUpOutcome)
+                          }
+                        >
+                          <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue placeholder="Log outcome…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {OUTCOME_OPTIONS.map((o) => (
+                              <SelectItem
+                                key={o.value}
+                                value={o.value}
+                                className="text-xs"
+                              >
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 text-xs"
+                          disabled={completing === fu.id || logging === fu.id}
+                          onClick={() => markComplete(fu)}
+                          title="Mark complete without logging an outcome"
+                        >
+                          <CheckCircle2 className="size-3.5 mr-1" />
+                          {completing === fu.id ? "…" : "Complete"}
+                        </Button>
+                      </div>
                     </TableCell>
                   ) : (
                     <TableCell>
