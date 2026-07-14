@@ -1,13 +1,7 @@
 import { useState, useMemo } from "react";
 import { useGetList, useCreate, useNotify } from "ra-core";
 import { useNotifyOnError } from "../QueryError";
-import {
-  MessageSquare,
-  Users,
-  AlertCircle,
-  Send,
-  Clock,
-} from "lucide-react";
+import { MessageSquare, Users, AlertCircle, Send, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Client, ClientStatus } from "../types";
+import type { Client } from "../types";
 import { formatDate } from "../utils";
 
 interface SmsQueueRecord {
@@ -77,18 +71,24 @@ export function SmsCampaigns() {
     sort: { field: "name", order: "ASC" },
   });
 
-  const { data: stopList, error: stopListError } = useGetList<StopListEntry>("stop_list", {
-    filter: {},
-    pagination: { page: 1, perPage: 10000 },
-    sort: { field: "created_at", order: "DESC" },
-  });
-
-  const { data: campaigns, isPending: campaignsPending, error: campaignsError } =
-    useGetList<SmsQueueRecord>("sms_queue", {
+  const { data: stopList, error: stopListError } = useGetList<StopListEntry>(
+    "stop_list",
+    {
       filter: {},
-      pagination: { page: 1, perPage: 50 },
-      sort: { field: "queued_at", order: "DESC" },
-    });
+      pagination: { page: 1, perPage: 10000 },
+      sort: { field: "created_at", order: "DESC" },
+    },
+  );
+
+  const {
+    data: campaigns,
+    isPending: campaignsPending,
+    error: campaignsError,
+  } = useGetList<SmsQueueRecord>("sms_queue", {
+    filter: {},
+    pagination: { page: 1, perPage: 50 },
+    sort: { field: "queued_at", order: "DESC" },
+  });
 
   useNotifyOnError(clientsError, "clients");
   useNotifyOnError(stopListError, "stop list");
@@ -191,9 +191,7 @@ export function SmsCampaigns() {
                         variant="secondary"
                         className="text-[10px] px-1 py-0 h-4"
                       >
-                        {segment === s
-                          ? eligibleClients.length
-                          : ""}
+                        {segment === s ? eligibleClients.length : ""}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -250,7 +248,9 @@ export function SmsCampaigns() {
 
           <Button
             onClick={handleQueue}
-            disabled={queuing || !message.trim() || eligibleClients.length === 0}
+            disabled={
+              queuing || !message.trim() || eligibleClients.length === 0
+            }
             className="w-full"
           >
             <Send className="size-4 mr-1.5" />

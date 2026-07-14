@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useGetList, useUpdate, useCreate, useNotify } from "ra-core";
+import type { CSSProperties } from "react";
+import { useGetList, useUpdate, useNotify } from "ra-core";
 import { QueryErrorBanner } from "../QueryError";
 import {
   DragDropContext,
@@ -7,8 +7,6 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { TrendingUp, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +25,7 @@ export function PipelineKanban() {
   const notify = useNotify();
   const [update] = useUpdate();
 
-  const { data, isPending, refetch, error } = useGetList<PipelineRecord>("pipeline", {
+  const { data, isPending, error } = useGetList<PipelineRecord>("pipeline", {
     filter: {},
     pagination: { page: 1, perPage: 500 },
     sort: { field: "created_at", order: "DESC" },
@@ -57,10 +55,7 @@ export function PipelineKanban() {
   };
 
   const columnTotal = (status: PipelineStatus) =>
-    byStatus(status).reduce(
-      (sum, r) => sum + (r.estimated_premium ?? 0),
-      0,
-    );
+    byStatus(status).reduce((sum, r) => sum + (r.estimated_premium ?? 0), 0);
 
   return (
     <div className="p-6 space-y-4 h-full">
@@ -133,18 +128,23 @@ export function PipelineKanban() {
                             draggableId={record.id}
                             index={index}
                           >
-                            {(drag, dragSnapshot) => (
-                              <div
-                                ref={drag.innerRef}
-                                {...drag.draggableProps}
-                                {...drag.dragHandleProps}
-                              >
-                                <PipelineCard
-                                  record={record}
-                                  isDragging={dragSnapshot.isDragging}
-                                />
-                              </div>
-                            )}
+                            {(drag, dragSnapshot) => {
+                              const { style: dragStyle, ...draggableProps } =
+                                drag.draggableProps;
+                              return (
+                                <div
+                                  ref={drag.innerRef}
+                                  {...draggableProps}
+                                  {...drag.dragHandleProps}
+                                  style={dragStyle as CSSProperties}
+                                >
+                                  <PipelineCard
+                                    record={record}
+                                    isDragging={dragSnapshot.isDragging}
+                                  />
+                                </div>
+                              );
+                            }}
                           </Draggable>
                         ))}
                         {provided.placeholder}

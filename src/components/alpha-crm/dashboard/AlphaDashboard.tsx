@@ -11,39 +11,49 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Client, FollowUp, ContactLog } from "../types";
-import { STATUS_COLORS, STATUS_LABELS, OUTCOME_LABELS } from "../types";
+import { STATUS_LABELS, OUTCOME_LABELS } from "../types";
 import { formatDate, formatRelativeDate, formatCurrency } from "../utils";
 import { QueryErrorBanner, useNotifyOnError } from "../QueryError";
 
 export function AlphaDashboard() {
   const today = new Date().toISOString().split("T")[0];
 
-  const { data: clients, isPending: clientsLoading, error: clientsError } = useGetList<Client>(
-    "clients",
+  const {
+    data: clients,
+    isPending: clientsLoading,
+    error: clientsError,
+  } = useGetList<Client>("clients", {
+    filter: {},
+    pagination: { page: 1, perPage: 1000 },
+    sort: { field: "name", order: "ASC" },
+  });
+
+  const { data: overdueFollowUps, error: overdueError } = useGetList<FollowUp>(
+    "follow_ups",
     {
-      filter: {},
-      pagination: { page: 1, perPage: 1000 },
-      sort: { field: "name", order: "ASC" },
+      filter: { "completed@eq": "false", "scheduled_date@lt": today },
+      pagination: { page: 1, perPage: 100 },
+      sort: { field: "scheduled_date", order: "ASC" },
     },
   );
 
-  const { data: overdueFollowUps, error: overdueError } = useGetList<FollowUp>("follow_ups", {
-    filter: { "completed@eq": "false", "scheduled_date@lt": today },
-    pagination: { page: 1, perPage: 100 },
-    sort: { field: "scheduled_date", order: "ASC" },
-  });
+  const { data: todayFollowUps, error: todayError } = useGetList<FollowUp>(
+    "follow_ups",
+    {
+      filter: { "completed@eq": "false", "scheduled_date@eq": today },
+      pagination: { page: 1, perPage: 50 },
+      sort: { field: "priority", order: "ASC" },
+    },
+  );
 
-  const { data: todayFollowUps, error: todayError } = useGetList<FollowUp>("follow_ups", {
-    filter: { "completed@eq": "false", "scheduled_date@eq": today },
-    pagination: { page: 1, perPage: 50 },
-    sort: { field: "priority", order: "ASC" },
-  });
-
-  const { data: recentActivity, error: activityError } = useGetList<ContactLog>("contact_logs", {
-    filter: {},
-    pagination: { page: 1, perPage: 10 },
-    sort: { field: "created_at", order: "DESC" },
-  });
+  const { data: recentActivity, error: activityError } = useGetList<ContactLog>(
+    "contact_logs",
+    {
+      filter: {},
+      pagination: { page: 1, perPage: 10 },
+      sort: { field: "created_at", order: "DESC" },
+    },
+  );
 
   useNotifyOnError(overdueError ?? todayError, "follow-ups");
   useNotifyOnError(activityError, "recent activity");
@@ -55,11 +65,15 @@ export function AlphaDashboard() {
     CANCELLED: clients?.filter((c) => c.status === "CANCELLED").length ?? 0,
   };
 
-  const totalPremium = clients
-    ?.filter((c) => c.status === "ACTIVE" && c.premium)
-    .reduce((sum, c) => sum + parseFloat(c.premium ?? "0"), 0) ?? 0;
+  const totalPremium =
+    clients
+      ?.filter((c) => c.status === "ACTIVE" && c.premium)
+      .reduce((sum, c) => sum + parseFloat(c.premium ?? "0"), 0) ?? 0;
 
-  const upcomingFollowUps = [...(overdueFollowUps ?? []), ...(todayFollowUps ?? [])];
+  const upcomingFollowUps = [
+    ...(overdueFollowUps ?? []),
+    ...(todayFollowUps ?? []),
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -81,7 +95,9 @@ export function AlphaDashboard() {
         </p>
       </div>
 
-      {clientsError && <QueryErrorBanner error={clientsError} label="clients" />}
+      {clientsError && (
+        <QueryErrorBanner error={clientsError} label="clients" />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -99,7 +115,9 @@ export function AlphaDashboard() {
         />
         <KpiCard
           title="At Risk / Lapsed"
-          value={clientsLoading ? null : statusCounts.AT_RISK + statusCounts.LAPSED}
+          value={
+            clientsLoading ? null : statusCounts.AT_RISK + statusCounts.LAPSED
+          }
           icon={<AlertTriangle className="size-4 text-amber-500" />}
           sub="need attention"
           highlight={statusCounts.AT_RISK + statusCounts.LAPSED > 0}
@@ -134,7 +152,11 @@ export function AlphaDashboard() {
           ) : (
             <div className="space-y-2">
               {upcomingFollowUps.slice(0, 8).map((fu) => (
-                <FollowUpRow key={fu.id} followUp={fu} isOverdue={new Date(fu.scheduled_date) < new Date(today)} />
+                <FollowUpRow
+                  key={fu.id}
+                  followUp={fu}
+                  isOverdue={new Date(fu.scheduled_date) < new Date(today)}
+                />
               ))}
               {upcomingFollowUps.length > 8 && (
                 <p className="text-xs text-muted-foreground text-center py-1">
@@ -165,10 +187,9 @@ export function AlphaDashboard() {
                 (["ACTIVE", "AT_RISK", "LAPSED", "CANCELLED"] as const).map(
                   (status) => {
                     const count = statusCounts[status];
-                    const pct =
-                      clients?.length
-                        ? Math.round((count / clients.length) * 100)
-                        : 0;
+                    const pct = clients?.length
+                      ? Math.round((count / clients.length) * 100)
+                      : 0;
                     return (
                       <div key={status} className="space-y-0.5">
                         <div className="flex items-center justify-between text-xs">
@@ -185,10 +206,10 @@ export function AlphaDashboard() {
                               status === "ACTIVE"
                                 ? "bg-emerald-500"
                                 : status === "AT_RISK"
-                                ? "bg-amber-400"
-                                : status === "LAPSED"
-                                ? "bg-red-400"
-                                : "bg-gray-300"
+                                  ? "bg-amber-400"
+                                  : status === "LAPSED"
+                                    ? "bg-red-400"
+                                    : "bg-gray-300"
                             }`}
                             style={{ width: `${pct}%` }}
                           />
@@ -211,14 +232,18 @@ export function AlphaDashboard() {
             </CardHeader>
             <CardContent>
               {!recentActivity?.length ? (
-                <p className="text-xs text-muted-foreground">No activity yet.</p>
+                <p className="text-xs text-muted-foreground">
+                  No activity yet.
+                </p>
               ) : (
                 <ul className="space-y-2">
                   {recentActivity.map((log) => (
                     <li key={log.id} className="flex gap-2 items-start text-xs">
                       <Phone className="size-3 shrink-0 mt-0.5 text-muted-foreground" />
                       <div className="min-w-0">
-                        <span className="font-medium">{log.interaction_type}</span>
+                        <span className="font-medium">
+                          {log.interaction_type}
+                        </span>
                         {log.outcome && (
                           <span className="text-muted-foreground">
                             {" · "}
@@ -264,13 +289,13 @@ function KpiCard({
         {value === null ? (
           <Skeleton className="h-7 w-20" />
         ) : (
-          <p className={`text-2xl font-bold ${highlight ? "text-amber-600" : ""}`}>
+          <p
+            className={`text-2xl font-bold ${highlight ? "text-amber-600" : ""}`}
+          >
             {value}
           </p>
         )}
-        {sub && (
-          <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
-        )}
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </CardContent>
     </Card>
   );

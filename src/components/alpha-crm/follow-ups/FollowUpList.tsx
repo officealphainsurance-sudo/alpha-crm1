@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useGetList, useUpdate, useNotify } from "ra-core";
-import { ClipboardList, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  ClipboardList,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -21,7 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FollowUp, FollowUpOutcome } from "../types";
 import { OUTCOME_LABELS, PRIORITY_COLORS, nextFollowUpDate } from "../types";
-import { formatDate, isPastDate, isWithinDays } from "../utils";
+import { formatDate, isPastDate } from "../utils";
 import { QueryErrorRow } from "../QueryError";
 
 const OUTCOME_OPTIONS: { value: FollowUpOutcome; label: string }[] = [
@@ -64,14 +68,18 @@ export function FollowUpList() {
     sort: { field: "scheduled_date", order: "ASC" },
   });
 
-  const { data, isPending, refetch, error } = useGetList<FollowUp>("follow_ups", {
-    filter: filterBySection(activeSection),
-    pagination: { page: 1, perPage: 200 },
-    sort: {
-      field: activeSection === "completed" ? "completed_at" : "scheduled_date",
-      order: activeSection === "completed" ? "DESC" : "ASC",
+  const { data, isPending, refetch, error } = useGetList<FollowUp>(
+    "follow_ups",
+    {
+      filter: filterBySection(activeSection),
+      pagination: { page: 1, perPage: 200 },
+      sort: {
+        field:
+          activeSection === "completed" ? "completed_at" : "scheduled_date",
+        order: activeSection === "completed" ? "DESC" : "ASC",
+      },
     },
-  });
+  );
 
   const overdueCount = overdue?.length ?? 0;
 
@@ -90,7 +98,7 @@ export function FollowUpList() {
       });
       if (outcome !== "not_interested") {
         await (async () => {
-          const response = await fetch("/api/follow-ups", {
+          await fetch("/api/follow-ups", {
             method: "POST",
             body: JSON.stringify({
               client_id: followUp.client_id,
@@ -103,9 +111,7 @@ export function FollowUpList() {
       }
       notify(
         `Logged: ${OUTCOME_LABELS[outcome]}` +
-          (outcome !== "not_interested"
-            ? ` → next follow-up scheduled`
-            : ""),
+          (outcome !== "not_interested" ? ` → next follow-up scheduled` : ""),
         { type: "success" },
       );
       refetch();
@@ -208,10 +214,10 @@ export function FollowUpList() {
                     {activeSection === "today"
                       ? "Nothing due today — you're on top of it."
                       : activeSection === "overdue"
-                      ? "No overdue follow-ups."
-                      : activeSection === "upcoming"
-                      ? "No upcoming follow-ups scheduled."
-                      : "No completed follow-ups yet."}
+                        ? "No overdue follow-ups."
+                        : activeSection === "upcoming"
+                          ? "No upcoming follow-ups scheduled."
+                          : "No completed follow-ups yet."}
                   </p>
                 </TableCell>
               </TableRow>
